@@ -7,6 +7,7 @@
 // import { OrbitControls } from "./jsm/controls/OrbitControls.js";
 
 let camera, scene, renderer, stats;
+let canvas;
 
 let mesh;
 const amount = parseInt( window.location.search.substr( 1 ) ) || 25;
@@ -14,13 +15,11 @@ const count = Math.pow( amount, 3 );
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2( 1, 1 );
-var gui = new dat.gui.GUI();
 
 var changingState = new function() {
     this.switchOn = true;
     this.switchOff = false;
     this.transparent = false;
-    this.dispose = false;
     this.transparency = 1.;
 }
 
@@ -220,7 +219,7 @@ const color = new THREE.Color();
 
 init();
 animate();
-gui = initUi(gui);
+initUi();
 
 function initUi(gui) {
     gui = new dat.gui.GUI();
@@ -242,8 +241,12 @@ function initUi(gui) {
         changingState.switchOn=false;
         gui.__controllers[1].updateDisplay();
     });
-    gui.add(changingState, 'dispose');
-    gui.add(changingState, 'transparent');
+
+    var ifReset = { reset:function(){
+        addNewMesh(brickFromMatrix(mesh, .95));
+    }};
+
+    gui.add(ifReset, 'reset');
 
     return gui;
 }
@@ -251,15 +254,26 @@ function initUi(gui) {
 const spacing = 1.;
 
 // birck from matrix
-function brickFromMatrix(mesh) {
+function brickFromMatrix(mesh, scale) {
     let i = 0;
     const matrix = new THREE.Matrix4();
+
+    const geometry = new THREE.BoxGeometry(.9, .9, .9);
+    const material = new THREE.MeshPhongMaterial({
+        color,
+        opacity: 1.,
+        transparent: false,
+    });
+
+    mesh = new THREE.InstancedMesh( geometry, material, a_list.length );
 
     console.log(matrix);
 
     // console.log(a_list);
     a_list.forEach((thisMatrix) => {
+
         matrix.elements = thisMatrix;
+        matrix.multiplyScalar(scale);
         if (i == 2) {
             console.log(thisMatrix);
             console.log(matrix);
@@ -368,7 +382,7 @@ function init() {
 
     mesh = new THREE.InstancedMesh( geometry, material, count );
 
-    mesh = brickFromMatrix(mesh);
+    mesh = brickFromMatrix(mesh, 1.);
 
     scene.add( mesh );
 
@@ -389,6 +403,18 @@ function init() {
     window.addEventListener( 'resize', onWindowResize );
     document.addEventListener( 'mousemove', onMouseMove );
 
+}
+
+function addNewMesh(mesh) {
+    for (let i = scene.children.length - 1; i >= 0; i--) {
+        if(scene.children[i].type === "Mesh")
+            scene.remove(scene.children[i]);
+            console.log("removed a mesh");
+    };
+
+    console.log(mesh);
+    scene.add( mesh );
+    animate();
 }
 
 function onWindowResize() {
@@ -412,7 +438,6 @@ function onMouseMove( event ) {
 function animate() {
 
     requestAnimationFrame( animate );
-
     render();
 
 }
@@ -431,16 +456,14 @@ function render() {
         if (changingState.switchOn) {
             mesh.setColorAt( instanceId, onColor );
             mesh.instanceColor.needsUpdate = true;
+            console.log("coloring on index "+instanceId);
+            console.log(scene.children);
         } else if (changingState.switchOff){
             mesh.setColorAt( instanceId, offColor );
             mesh.instanceColor.needsUpdate = true;
-        } else if (changingState.dispose) {
-            console.log(instanceId);
-            mesh.dispose();
-            mesh.instanceColor.needsUpdate = true;
+            console.log("coloring off index "+instanceId);
+            console.log(scene.children);
         }
-
-
     }
 
     renderer.render( scene, camera );
