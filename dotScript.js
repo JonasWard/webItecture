@@ -220,6 +220,8 @@ var changingState = new function() {
     this.visualisation = false;
 }
 
+const color = new THREE.Color();
+
 let vertexStates = [];
 // console.log(vertexStates);
 initVertexStates();
@@ -251,8 +253,6 @@ const materialOff = new THREE.MeshPhongMaterial({
     opacity: .2,
     transparent: false,
 });
-
-const color = new THREE.Color();
 
 function initVertexStates() {
     for (var j = 0; j < changingState.layerCount + 1; j ++) {
@@ -394,8 +394,8 @@ function vertexMesh() {
 
     const geometry = new THREE.IcosahedronGeometry(.1, 3);
     const material = new THREE.MeshPhongMaterial({
-        color: offColor,
-        opacity: 1,
+        color,
+        opacity: 1.,
         transparent: false
     });
 
@@ -414,11 +414,15 @@ function vertexMesh() {
 
 
         theVertexes.setMatrixAt(i, matrix);
-        if (vertexStates[0][i]) {
-            theVertexes.setColorAt(i, onColor);
-        } else {
+        if (vertexStates[0][i]===OFFSTATE) {
             theVertexes.setColorAt(i, offColor);
+        } else if (vertexStates[0][i]===ONSTATE){
+            theVertexes.setColorAt(i, onColor);
+        } else if (vertexStates[0][i]===BRIDGESTATE) {
+            theVertexes.setColorAt(i, bridgeColor);
         }
+
+        theVertexes.instanceColor.needsUpdate = true;
 
         i++;
     })
