@@ -1,4 +1,11 @@
-
+// //TODO
+// - adding custom mesh (struggling with transferring gltf GeometryBuffer to MeshInstance GeometryBuffer)
+// - adjusting any layer with the raycasting "type-coloring"
+//
+// // TODO wishlist
+// - custom path input/generation strategies (basic primitives, sin-superpositions, differential growth, unequal coverage hilbert curve) - now hardcoded
+// - smoothing / skipping layers
+// - branching strategy (more than two edges per vertex)
 
 // import * as THREE from '../build/three.module.js';
 
