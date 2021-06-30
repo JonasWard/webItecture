@@ -16,10 +16,38 @@ const OFFSTATE = 0;
 const ONSTATE = 1;
 const BRIDGESTATE = 2;
 
-var glTFGeometry = new THREE.BufferGeometry();
-var loader = new THREE.GLTFLoader().setPath( 'assets/' );
-loader.load( 'something.glb', function ( gltf ){});
-console.log(loader);
+
+// const url = 'assets/aMarie.glb';
+// let brickBufferGeo;
+
+// // Load a glTF resource
+// THREE.DRACOLoader.setDecoderPath('./localLibraries');
+//
+// // (Optional) Use JS decoder (defaults to WebAssembly if supported).
+// THREE.DRACOLoader.setDecoderConfig({type: 'js'});
+//
+// // (Optional) Pre-fetch decoder source files (defaults to load on demand).
+// THREE.DRACOLoader.getDecoderModule();
+
+// var aLoader = new THREE.DRACOLoader();
+//
+// aLoader.load( url, function ( geometry ) {
+//
+//     const material = new THREE.MeshStandardMaterial( { color: 0x606060 } );
+//     const mesh = new THREE.Mesh( geometry, material );
+//     console.log(mesh);
+//     brickBufferGeo = new THREE.BufferGeometry();
+//
+//     brickBufferGeo.setAttribute( 'position', mesh.attributes['position']);
+//     brickBufferGeo.setAttribute( 'normal', mesh.attributes['normal']);
+//     brickBufferGeo.setAttribute( 'uv', mesh.attributes['uv']);
+// } );
+
+
+// var glTFGeometry = new THREE.BufferGeometry();
+// var loader = new THREE.GLTFLoader().setPath( 'assets/' );
+// loader.load( 'something.glb', function ( gltf ){});
+// console.log(loader);
 
 const meshPlane = [[0.94971302264071933, -0.31312166106264266, 0.0, 0.0, 0.31312166106264266, 0.94971302264071933, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -15.95856384008637, -7.6880890922682283, 0.0, 1.0],
     [0.99813265711724297, 0.061083539485463911, 0.0, 0.0, -0.061083539485463911, 0.99813265711724297, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -19.81807270697783, -7.1912411273194072, 0.0, 1.0],
@@ -177,17 +205,13 @@ const vertexPoints = [[1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.
     [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -14.228697455514714, -8.5276564614676875, 0.0, 1.0]];
 const vList = [
     1.0, 2.5, 0.0, 1.0, 7.5, 0.0, 1.0, 7.5, 7.83900, 1.0, 7.5, 7.83900, 1.0, 7.5, 0.0, 1.0, 2.5, 0.0, 1.0, 2.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 2.5, 0.0, 1.0, 7.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 7.5, 0.0, 1.0, 2.5, 7.83900, 1.0, 7.5, 7.83900, 1.0, 7.5, 7.83900];
-const layerCount = 25;
-
-let vertexStates = [];
-// console.log(vertexStates);
-initVertexStates();
-// console.log(vertexStates);
 
 let camera, scene, renderer, stats;
 let canvas;
 
 var changingState = new function() {
+    this.layerCount = 10;
+    this.showBricks = 10000;
     this.switchOn = true;
     this.switchOff = false;
     this.switchBridge = false;
@@ -195,6 +219,11 @@ var changingState = new function() {
     this.transparency = 1.;
     this.visualisation = false;
 }
+
+let vertexStates = [];
+// console.log(vertexStates);
+initVertexStates();
+// console.log(vertexStates);
 
 const onColor = new THREE.Color().setHex('0xcb2e0c');
 const offColor = new THREE.Color().setHex('0x30a5c1');
@@ -226,7 +255,7 @@ const materialOff = new THREE.MeshPhongMaterial({
 const color = new THREE.Color();
 
 function initVertexStates() {
-    for (var j = 0; j < layerCount + 1; j ++) {
+    for (var j = 0; j < changingState.layerCount + 1; j ++) {
         var localLayer = [];
         for (var i = 0; i < vertexPoints.length; i++) {
             localLayer.push(OFFSTATE);
@@ -238,6 +267,23 @@ function initVertexStates() {
     }
 }
 
+function reInitVertexStates() {
+    var newVertexStates = [];
+    newVertexStates.push(Array.from(vertexStates[0]));
+    for (var j = 1; j < changingState.layerCount + 1; j ++) {
+        var localLayer = [];
+        for (var i = 0; i < vertexPoints.length; i++) {
+            localLayer.push(OFFSTATE);
+        }
+
+        // console.log(firstLayer);
+
+        newVertexStates.push(localLayer);
+    }
+
+    vertexStates = newVertexStates;
+}
+
 function resetVertexStates() {
     for (var j = 0; j < vertexStates[0].length; j ++) {
         vertexStates[0][j] = OFFSTATE;
@@ -247,20 +293,21 @@ function resetVertexStates() {
 function visualization() {
     // var geometry = new THREE.BufferGeometry();
     // geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vList), 3 ) );
-    var geometry = new THREE.BoxGeometry(5., 1., meshHeight);
-    var localMaterial = new THREE.MeshPhongMaterial({
+    const geometry = new THREE.BoxGeometry(5., 1., meshHeight);
+    // const geometry = brickBufferGeo;
+    const localMaterial = new THREE.MeshPhongMaterial({
         color: brickColor,
         opacity: 1.,
         transparent: false,
     });
 
-    var visMesh = new THREE.InstancedMesh( geometry, localMaterial, 10000);
+    const visMesh = new THREE.InstancedMesh( geometry, localMaterial, changingState.showBricks);
 
     // creating the first layer
 
     var index = 0;
 
-    for (var j = 0; j < layerCount; j ++) {
+    for (var j = 0; j < changingState.layerCount; j ++) {
         var i = 0;
         // console.log(a_list);
 
@@ -304,8 +351,14 @@ function visualization() {
             i++;
         });
 
+        if (index === changingState.showBricks) {
+            break;
+        }
+
         // console.log(vertexStates);
     }
+
+    console.log("brick count: " + index+1)
 
     return visMesh;
 }
@@ -382,8 +435,11 @@ function initUi(gui) {
     // console.log(mesh.count);
     // console.log(amount);
 
-    gui.add( mesh, 'count', 0, amount ).onChange( function () {
-        mesh.count = parseInt(mesh.count) * amount * amount;
+    gui.add(changingState, 'layerCount', 0, 50 ).onChange( function () {
+        if (changingState.visualisation) {
+            reInitVertexStates();
+            initVis(visualization());
+        }
     });
     // gui.add(changingState, 'transparency', 0., 1.).onChange( function () {
     //     // init();
@@ -608,7 +664,7 @@ function addNewMesh(mesh) {
             console.log("removed a mesh");
     };
 
-    console.log(mesh);
+    // console.log(mesh);
     scene.add( mesh );
     scene.add(vertexMesh());
     animate();
@@ -622,7 +678,7 @@ function initVis(visMesh) {
     };
 
     scene.add(visMesh);
-    console.log(scene.children);
+    // console.log(scene.children);
     animate();
 }
 
