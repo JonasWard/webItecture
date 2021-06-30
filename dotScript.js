@@ -8,8 +8,18 @@
 
 // loading mesh
 // Load a glTF resource
-const loader = new THREE.GLTFLoader();
-const dracoLoader = new THREE.DRACOLoader();
+// const loader = new THREE.GLTFLoader();
+// const dracoLoader = new THREE.DRACOLoader();
+const meshHeight = 2.;
+
+const OFFSTATE = 0;
+const ONSTATE = 1;
+const BRIDGESTATE = 2;
+
+var glTFGeometry = new THREE.BufferGeometry();
+var loader = new THREE.GLTFLoader().setPath( 'assets/' );
+loader.load( 'something.glb', function ( gltf ){});
+console.log(loader);
 
 const meshPlane = [[0.94971302264071933, -0.31312166106264266, 0.0, 0.0, 0.31312166106264266, 0.94971302264071933, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -15.95856384008637, -7.6880890922682283, 0.0, 1.0],
     [0.99813265711724297, 0.061083539485463911, 0.0, 0.0, -0.061083539485463911, 0.99813265711724297, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -19.81807270697783, -7.1912411273194072, 0.0, 1.0],
@@ -165,12 +175,14 @@ const vertexPoints = [[1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.
     [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -8.007899576198346, -12.671502910262445, 0.0, 1.0],
     [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -10.905756192062213, -10.498949432006782, 0.0, 1.0],
     [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -14.228697455514714, -8.5276564614676875, 0.0, 1.0]];
-const layerCount = 10;
+const vList = [
+    1.0, 2.5, 0.0, 1.0, 7.5, 0.0, 1.0, 7.5, 7.83900, 1.0, 7.5, 7.83900, 1.0, 7.5, 0.0, 1.0, 2.5, 0.0, 1.0, 2.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 2.5, 0.0, 1.0, 7.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 2.5, 7.83900, 1.0, 7.5, 0.0, 1.0, 2.5, 7.83900, 1.0, 7.5, 7.83900, 1.0, 7.5, 7.83900];
+const layerCount = 25;
 
-let vertexBooleans = [];
-console.log(vertexBooleans);
-initVertexBooleans();
-console.log(vertexBooleans);
+let vertexStates = [];
+// console.log(vertexStates);
+initVertexStates();
+// console.log(vertexStates);
 
 let camera, scene, renderer, stats;
 let canvas;
@@ -178,6 +190,7 @@ let canvas;
 var changingState = new function() {
     this.switchOn = true;
     this.switchOff = false;
+    this.switchBridge = false;
     this.transparent = false;
     this.transparency = 1.;
     this.visualisation = false;
@@ -185,6 +198,7 @@ var changingState = new function() {
 
 const onColor = new THREE.Color().setHex('0xcb2e0c');
 const offColor = new THREE.Color().setHex('0x30a5c1');
+const bridgeColor = new THREE.Color().setHex('0xe8e35f');
 const transparent = '0x1020ffff';
 const brickColor = new THREE.Color().setHex('0x9B6C4B');
 
@@ -211,28 +225,36 @@ const materialOff = new THREE.MeshPhongMaterial({
 
 const color = new THREE.Color();
 
-function initVertexBooleans() {
+function initVertexStates() {
     for (var j = 0; j < layerCount + 1; j ++) {
         var localLayer = [];
         for (var i = 0; i < vertexPoints.length; i++) {
-            localLayer.push(false);
+            localLayer.push(OFFSTATE);
         }
 
         // console.log(firstLayer);
 
-        vertexBooleans.push(localLayer);
+        vertexStates.push(localLayer);
+    }
+}
+
+function resetVertexStates() {
+    for (var j = 0; j < vertexStates[0].length; j ++) {
+        vertexStates[0][j] = OFFSTATE;
     }
 }
 
 function visualization() {
-    var geometry = new THREE.BoxGeometry( 5., 1., 1.);
+    // var geometry = new THREE.BufferGeometry();
+    // geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vList), 3 ) );
+    var geometry = new THREE.BoxGeometry(5., 1., meshHeight);
     var localMaterial = new THREE.MeshPhongMaterial({
         color: brickColor,
         opacity: 1.,
         transparent: false,
     });
 
-    var visMesh = new THREE.InstancedMesh( geometry, localMaterial, 1000);
+    var visMesh = new THREE.InstancedMesh( geometry, localMaterial, 10000);
 
     // creating the first layer
 
@@ -242,11 +264,13 @@ function visualization() {
         var i = 0;
         // console.log(a_list);
 
-        var add_matrix = new THREE.Matrix4().makeTranslation(0., 0., j * 1.);
+        var add_matrix = new THREE.Matrix4().makeTranslation(0., 0., j * meshHeight);
         meshPlane.forEach((thisMatrix) => {
 
             if (i % 2 === j % 2) {
-                if (vertexBooleans[j][(i - 1) % theVertexes.count] && vertexBooleans[j][i]) {
+                var v_a = vertexStates[j][(i - 1) % theVertexes.count];
+                var v_b = vertexStates[j][i];
+                if ((v_a === ONSTATE) && (v_b === ONSTATE)) {
                     // console.log("added an instance of the mesh!");
 
                     var locMatrix = new THREE.Matrix4();
@@ -255,19 +279,32 @@ function visualization() {
                     locMatrix.multiply(add_matrix);
                     visMesh.setMatrixAt(index, locMatrix);
                     // mesh.setColorAt(i, offColor);
-                    vertexBooleans[j + 1][(i - 1) % theVertexes.count] = true;
-                    vertexBooleans[j + 1][i] = true;
+                    vertexStates[j + 1][(i - 1) % theVertexes.count] = ONSTATE;
+                    vertexStates[j + 1][i] = ONSTATE;
                     index++;
+                } else if ((v_a + v_b === ONSTATE + BRIDGESTATE)) {
+                    var locMatrix = new THREE.Matrix4();
+
+                    locMatrix.elements = Array.from(thisMatrix);
+                    locMatrix.multiply(add_matrix);
+                    visMesh.setMatrixAt(index, locMatrix);
+                    // mesh.setColorAt(i, offColor);
+                    vertexStates[j + 1][(i - 1) % theVertexes.count] = ONSTATE;
+                    vertexStates[j + 1][i] = ONSTATE;
+                    index++;
+                } else if ((v_a === BRIDGESTATE) && (v_b === BRIDGESTATE)) {
+                    vertexStates[j + 1][(i - 1) % theVertexes.count] = BRIDGESTATE;
+                    vertexStates[j + 1][i] = BRIDGESTATE;
                 } else {
-                    vertexBooleans[j + 1][(i - 1) % theVertexes.count] = false;
-                    vertexBooleans[j + 1][i] = false;
+                    vertexStates[j + 1][(i - 1) % theVertexes.count] = OFFSTATE;
+                    vertexStates[j + 1][i] = OFFSTATE;
                 }
             }
 
             i++;
         });
 
-        console.log(vertexBooleans);
+        // console.log(vertexStates);
     }
 
     return visMesh;
@@ -276,12 +313,21 @@ function visualization() {
 function randomBricks() {
     for (var i = 0; i < theMesh.count; i++) {
         if (i % 2 === 0) {
-            if (Math.random() < .9) {
+            var randomValue = Math.random();
+            if (randomValue < .6) {
                 theMesh.setColorAt(i, onColor);
                 theVertexes.setColorAt((i - 1) % theVertexes.count, onColor);
                 theVertexes.setColorAt(i, onColor);
-                vertexBooleans[0][(i - 1) % theVertexes.count] = true;
-                vertexBooleans[0][i] = true;
+                vertexStates[0][(i - 1) % theVertexes.count] = ONSTATE;
+                vertexStates[0][i] = ONSTATE;
+                theMesh.instanceColor.needsUpdate = true;
+                theVertexes.instanceColor.needsUpdate = true;
+            } else if (randomValue < .95) {
+                theMesh.setColorAt(i, bridgeColor);
+                theVertexes.setColorAt((i - 1) % theVertexes.count, bridgeColor);
+                theVertexes.setColorAt(i, bridgeColor);
+                vertexStates[0][(i - 1) % theVertexes.count] = BRIDGESTATE;
+                vertexStates[0][i] = BRIDGESTATE;
                 theMesh.instanceColor.needsUpdate = true;
                 theVertexes.instanceColor.needsUpdate = true;
             }
@@ -296,8 +342,8 @@ function vertexMesh() {
     const geometry = new THREE.IcosahedronGeometry(.1, 3);
     const material = new THREE.MeshPhongMaterial({
         color: offColor,
-        opacity: 5.,
-        transparent: true,
+        opacity: 1,
+        transparent: false
     });
 
     theVertexes = new THREE.InstancedMesh( geometry, material, meshPlane.length );
@@ -315,7 +361,7 @@ function vertexMesh() {
 
 
         theVertexes.setMatrixAt(i, matrix);
-        if (vertexBooleans[0][i]) {
+        if (vertexStates[0][i]) {
             theVertexes.setColorAt(i, onColor);
         } else {
             theVertexes.setColorAt(i, offColor);
@@ -333,8 +379,8 @@ initUi();
 function initUi(gui) {
     gui = new dat.gui.GUI();
 
-    console.log(mesh.count);
-    console.log(amount);
+    // console.log(mesh.count);
+    // console.log(amount);
 
     gui.add( mesh, 'count', 0, amount ).onChange( function () {
         mesh.count = parseInt(mesh.count) * amount * amount;
@@ -344,15 +390,26 @@ function initUi(gui) {
     // });
     gui.add(changingState, 'switchOn').onChange( function () {
         changingState.switchOff=false;
+        changingState.switchBridge=false;
         gui.__controllers[2].updateDisplay();
+        gui.__controllers[3].updateDisplay();
     });
     gui.add(changingState, 'switchOff').onChange( function () {
         changingState.switchOn=false;
+        changingState.switchBridge=false;
         gui.__controllers[1].updateDisplay();
+        gui.__controllers[3].updateDisplay();
+    });
+    gui.add(changingState, 'switchBridge').onChange( function () {
+        changingState.switchOn=false;
+        changingState.switchOff=false;
+        gui.__controllers[1].updateDisplay();
+        gui.__controllers[2].updateDisplay();
     });
 
     var ifReset = { reset:function(){
-        addNewMesh(brickFromMatrix(mesh, 2.));
+        resetVertexStates();
+        addNewMesh(brickFromMatrix(mesh, 1.));
     }};
 
     var ifRandom = { randomize:function(){
@@ -394,7 +451,7 @@ function brickFromMatrix(mesh, scale) {
 
     mesh = new THREE.InstancedMesh( geometry, material, meshPlane.length );
 
-    console.log(matrix);
+    // console.log(matrix);
 
     // console.log(a_list);
     meshPlane.forEach((thisMatrix) => {
@@ -402,15 +459,17 @@ function brickFromMatrix(mesh, scale) {
         if (i % 2 === 0) {
 
             matrix.elements = thisMatrix;
-            if (i == 2) {
-                console.log(thisMatrix);
-                console.log(matrix);
-            }
+            // if (i == 2) {
+            //     console.log(thisMatrix);
+            //     console.log(matrix);
+            // }
 
 
             mesh.setMatrixAt(i, matrix);
-            if ((vertexBooleans[0][(i - 1) % theVertexes.count] && vertexBooleans[0][i])) {
+            if ((vertexStates[0][(i - 1) % theVertexes.count] === ONSTATE && (vertexStates[0][i]) === ONSTATE)) {
                 mesh.setColorAt(i, onColor);
+            } else if ((vertexStates[0][(i - 1) % theVertexes.count] + (vertexStates[0][i]) >= ONSTATE + BRIDGESTATE)) {
+                mesh.setColorAt(i, bridgeColor);
             } else {
                 mesh.setColorAt(i, offColor);
             }
@@ -494,7 +553,7 @@ function newMesh(mesh) {
 
 function init() {
 
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 100 );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 200 );
     camera.position.set( amount, amount, amount );
     camera.lookAt( 0, 0, 0 );
 
@@ -607,8 +666,8 @@ function render() {
             theMesh.setColorAt( instanceId, onColor );
             theVertexes.setColorAt((instanceId - 1) % theVertexes.count, onColor);
             theVertexes.setColorAt(instanceId, onColor);
-            vertexBooleans[0][(instanceId - 1) % theVertexes.count] = true;
-            vertexBooleans[0][instanceId] = true;
+            vertexStates[0][(instanceId - 1) % theVertexes.count] = ONSTATE;
+            vertexStates[0][instanceId] = ONSTATE;
             theMesh.instanceColor.needsUpdate = true;
             theVertexes.instanceColor.needsUpdate = true;
             // console.log(theMesh);
@@ -616,15 +675,23 @@ function render() {
             // console.log(scene.children);
         } else if (changingState.switchOff){
             theMesh.setColorAt( instanceId, offColor );
-            theMesh.instanceColor.needsUpdate = true;
-            vertexBooleans[0][(instanceId - 1) % theVertexes.count] = false;
-            vertexBooleans[0][instanceId] = false;
+            vertexStates[0][(instanceId - 1) % theVertexes.count] = OFFSTATE;
+            vertexStates[0][instanceId] = OFFSTATE;
             theVertexes.setColorAt((instanceId - 1) % theVertexes.count, offColor);
-            theVertexes.instanceColor.needsUpdate = true;
             theVertexes.setColorAt(instanceId, offColor);
+            theMesh.instanceColor.needsUpdate = true;
+            theVertexes.instanceColor.needsUpdate = true;
             // console.log(theMesh);
             // console.log("coloring off index "+instanceId);
             // console.log(scene.children);
+        } else if (changingState.switchBridge){
+            theMesh.setColorAt(instanceId, bridgeColor);
+            vertexStates[0][(instanceId - 1) % theVertexes.count] = BRIDGESTATE;
+            vertexStates[0][instanceId] = BRIDGESTATE;
+            theVertexes.setColorAt((instanceId - 1) % theVertexes.count, bridgeColor);
+            theVertexes.setColorAt(instanceId, bridgeColor);
+            theMesh.instanceColor.needsUpdate = true;
+            theVertexes.instanceColor.needsUpdate = true;
         }
 
     }
