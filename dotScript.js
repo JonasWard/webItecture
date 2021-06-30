@@ -273,6 +273,22 @@ function visualization() {
     return visMesh;
 }
 
+function randomBricks() {
+    for (var i = 0; i < theMesh.count; i++) {
+        if (i % 2 === 0) {
+            if (Math.random() < .9) {
+                theMesh.setColorAt(i, onColor);
+                theVertexes.setColorAt((i - 1) % theVertexes.count, onColor);
+                theVertexes.setColorAt(i, onColor);
+                vertexBooleans[0][(i - 1) % theVertexes.count] = true;
+                vertexBooleans[0][i] = true;
+                theMesh.instanceColor.needsUpdate = true;
+                theVertexes.instanceColor.needsUpdate = true;
+            }
+        }
+    }
+}
+
 function vertexMesh() {
     let i = 0;
     const matrix = new THREE.Matrix4();
@@ -339,7 +355,12 @@ function initUi(gui) {
         addNewMesh(brickFromMatrix(mesh, 2.));
     }};
 
+    var ifRandom = { randomize:function(){
+        randomBricks();
+    }};
+
     gui.add(ifReset, 'reset');
+    gui.add(ifRandom, 'randomize');
 
     gui.add(changingState, 'visualisation').onChange( function () {
         changingState.switchOff=false;
