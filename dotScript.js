@@ -502,14 +502,14 @@ function initUi(gui) {
     return gui;
 }
 
-const spacing = 1.;
+const spacing = 1.2;
 
 // birck from matrix
 function brickFromMatrix(mesh, scale) {
     let i = 0;
     const matrix = new THREE.Matrix4();
 
-    const geometry = new THREE.BoxGeometry(.9, .9, .9 * scale);
+    const geometry = new THREE.BoxGeometry(1.2, 1.2, 1.2 * scale);
     const material = new THREE.MeshPhongMaterial({
         color,
         opacity: 1.,
