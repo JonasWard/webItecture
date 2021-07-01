@@ -664,7 +664,7 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
     document.addEventListener( 'mousemove', onMouseMove );
-    document.addEventListener('touchmove', onTouchmove);
+    document.addEventListener('touchstart', onTouchmove);
 
     animate();
 }
