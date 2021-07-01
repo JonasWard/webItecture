@@ -664,6 +664,7 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
     document.addEventListener( 'mousemove', onMouseMove );
+    document.addEventListener('touchmove', onTouchmove);
 
     animate();
 }
@@ -700,6 +701,12 @@ function onWindowResize() {
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 
+}
+
+function onTouchmove( event ) {
+    event.preventDefault();
+    mouse.x = (event.changedTouches[0].clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = -(event.changedTouches[0].clientY / window.innerHeight ) * 2 + 1;
 }
 
 function onMouseMove( event ) {
