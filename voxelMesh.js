@@ -43,7 +43,7 @@ class Vertex{
     }
 }
 
-class Voxel{
+class Cell{
     #activeFaces=[];
 
     constructor(vs, state, vGrid) {
@@ -102,6 +102,7 @@ class Voxel{
     }
 
     calculateNeighbours() {
+        this.#activeFaces = [];
         for (var i = 0; i < 6; i++){
             if ((this.ns[i] === null) || !(this.ns[i].s === 0)) {
                 var fIdxs = faceList[i];
@@ -118,7 +119,7 @@ class Voxel{
     facesAsObj() {
         var fString = "";
         for (const idx of this.#activeFaces){
-            console.log(idx);
+            // console.log(idx);
             var fIdxs = faceList[idx];
             for (const indexes of fIdxs){
                 var locString = "f";
@@ -132,9 +133,25 @@ class Voxel{
 
         return fString;
     }
+
+    facesVertexlist() {
+        var vertexArray = [];
+        for (const i of this.#activeFaces) {
+            var fIdxs = faceList[i];
+            for (const indexes of fIdxs){
+                for (const idx of indexes){
+                    vertexArray.push(this.vs[idx].x);
+                    vertexArray.push(this.vs[idx].y);
+                    vertexArray.push(this.vs[idx].z);
+                }
+            }
+        }
+
+        return vertexArray;
+    }
 }
 
-const floorVoxel = new Voxel([], 0, null);
+const floorGeometry = new Cell([], 0, null);
 
 class VoxelGrid{
     constructor(x_cnt, y_cnt, z_cnt, spacing) {        
@@ -142,7 +159,7 @@ class VoxelGrid{
     }
 
     constructFromGrid(x_cnt, y_cnt, z_cnt, spacing) {
-        console.log(x_cnt, y_cnt, z_cnt);
+        // console.log(x_cnt, y_cnt, z_cnt);
 
         var x_v_cnt = x_cnt + 1;
         var y_v_cnt = y_cnt + 1;
@@ -180,7 +197,7 @@ class VoxelGrid{
                         l0 + r0 + ln0, l0 + r0 + ln1, l0 + r1 + ln1, l0 + r1 + ln0,
                         l1 + r0 + ln0, l1 + r0 + ln1, l1 + r1 + ln1, l1 + r1 + ln0
                     ];
-                    console.log(idxs);
+                    // console.log(idxs);
 
                     var voxelVertices = [
                         this.vs[l0 + r0 + ln0],
@@ -193,7 +210,7 @@ class VoxelGrid{
                         this.vs[l1 + r1 + ln0]
                     ];
 
-                    this.voxels.push(new Voxel(voxelVertices, 0, this));
+                    this.voxels.push(new Cell(voxelVertices, 0, this));
                 }
             }
         }
@@ -233,7 +250,7 @@ class VoxelGrid{
         // setting floor voxel
         for (var j = 0; j < y_cnt; j++) {
             for (var k = 0; k < x_cnt; k++) {
-                this.voxels[j * y_cnt + k].bottom = floorVoxel;
+                this.voxels[j * y_cnt + k].bottom = floorGeometry;
             }
         }
 
@@ -273,7 +290,22 @@ class VoxelGrid{
 
         return objString;
     }
+
+    constructVertexeList() {
+        this.calculateFaces();
+        this.remapVertices();
+
+        var vArray = [];
+        for (const voxel of this.voxels) {
+            for (const value of voxel.facesVertexlist()) {
+                vArray.push(value);
+            }
+        }
+        
+        return vArray;
+    }
 }
 
 var vGrid = new VoxelGrid(10, 10, 10, 1.);
-console.log(vGrid.constructVertexFaceListString());
+// console.log(vGrid.constructVertexFaceListString());
+// console.log(vGrid.constructVertexeList());
