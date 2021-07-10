@@ -1,10 +1,19 @@
+// const faceList = [
+//     [[0, 1, 5], [0, 5, 4]], // front
+//     [[1, 2, 6], [1, 6, 5]], // right
+//     [[2, 3, 7], [2, 7, 6]], // back
+//     [[3, 0, 4], [3, 4, 7]], // left
+//     [[4, 5, 6], [4, 6, 7]], // top
+//     [[2, 0, 3], [1, 0, 2]]  // bottom
+// ]
+
 const faceList = [
-    [[0, 1, 5], [0, 5, 4]], // front
-    [[1, 2, 6], [1, 6, 5]], // right
-    [[2, 3, 7], [2, 7, 6]], // back
-    [[3, 0, 4], [3, 4, 7]], // left
-    [[4, 5, 6], [4, 6, 7]], // top
-    [[2, 0, 3], [1, 0, 2]]  // bottom
+    [[0, 1, 5]], // front
+    [[1, 2, 6]], // right
+    [[2, 3, 7]], // back
+    [[3, 0, 4]], // left
+    [[4, 5, 6]], // top
+    [[2, 0, 3]], // bottom
 ]
 
 const semantics = ['front', 'right', 'back', 'left', 'top', 'bottom']
@@ -149,6 +158,10 @@ class Cell{
 
         return vertexArray;
     }
+
+    // activePlane() {
+    //     var
+    // }
 }
 
 const floorGeometry = new Cell([], 0, null);

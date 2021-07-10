@@ -1,5 +1,3 @@
-import {VoxelGrid} from './voxelMesh.js';
-
 // console.log(THREE);
 // html data
 const myCanvas = document.getElementById("myCanvas");
@@ -41,35 +39,6 @@ scene.add(boxMesh);
 
 //Adding Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-// // Load a glTF resource
-// loader.load(
-// 	function ( gltf ) {
-    
-//     gltf.scale = .01;
-
-// 		scene.add( gltf.scene );
-
-// 		gltf.animations; // Array<THREE.AnimationClip>
-// 		gltf.scene; // THREE.Group
-// 		gltf.scenes; // Array<THREE.Group>
-// 		gltf.cameras; // Array<THREE.Camera>
-// 		gltf.asset; // Object
-
-// 	},
-// 	// called while loading is progressing
-// 	function ( xhr ) {
-
-// 		console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-
-// 	},
-// 	// called when loading has errors
-// 	function ( error ) {
-
-// 		console.log( 'An error happened' );
-
-// 	}
-// );
 
 // adding a baseplane
 const plane = new THREE.PlaneGeometry(15, 15);
