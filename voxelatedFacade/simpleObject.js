@@ -1,4 +1,4 @@
-// console.log(THREE);
+console.log(THREE);
 // html data
 const myCanvas = document.getElementById("myCanvas");
 
@@ -21,7 +21,10 @@ scene.background = new THREE.Color("yellow");
 renderer.shadowMap.enabled = true;
 
 var voxelGrid = new VoxelGrid(10, 10, 10, 1.);
-var vertexes = voxelGrid.constructVertexeList();
+var vertexes = voxelGrid.constructVertexesList();
+var meshGeo = voxelGrid.faceDotsGeometry(.2);
+
+console.log(meshGeo);
 
 const geometry = new THREE.BufferGeometry();
 const positionNumComponents = 3;
@@ -36,6 +39,7 @@ const material = new THREE.MeshStandardMaterial({color : "white"});
 const boxMesh = new THREE.Mesh(geometry, material);
 
 scene.add(boxMesh);
+scene.add(meshGeo);
 
 //Adding Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);

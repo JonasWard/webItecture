@@ -7,14 +7,14 @@
 //     [[2, 0, 3], [1, 0, 2]]  // bottom
 // ]
 
-const faceList = [
-    [[0, 1, 5]], // front
-    [[1, 2, 6]], // right
-    [[2, 3, 7]], // back
-    [[3, 0, 4]], // left
-    [[4, 5, 6]], // top
-    [[2, 0, 3]], // bottom
-]
+// const faceList = [
+//     [[0, 1, 5]], // front
+//     [[1, 2, 6]], // right
+//     [[2, 3, 7]], // back
+//     [[3, 0, 4]], // left
+//     [[4, 5, 6]], // top
+//     [[2, 0, 3]], // bottom
+// ]
 
 const semantics = ['front', 'right', 'back', 'left', 'top', 'bottom']
 
@@ -23,12 +23,22 @@ class Vertex{
     #activeIdx = 0;
 
     constructor(x, y, z, idx) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.v = new THREE.Vector3(x, y, z);
         this.i = idx;
 
         this.#activeIdx = idx;
+    }
+
+    get x(){
+        return this.v.x;
+    }
+
+    get y(){
+        return this.v.y;
+    }
+
+    get z(){
+        return this.v.z;
     }
 
     set isActive(state) {
@@ -52,7 +62,7 @@ class Vertex{
     }
 
     asTHREEV3() {
-        return new THREE.Vector(this.x, this.y, this.z);
+        return this.v;
     }
 }
 
@@ -91,34 +101,40 @@ class QuadFace{
         ];
     }
 
-    center() {
-        return (this.vs[0].asTHREEV3() + this.vs[2].asTHREEV3()) * .5;
+    get center() {
+        var v = this.vs[0].v.clone();
+        return v.add(this.vs[2].v).multiplyScalar(.5);
     }
 
-    baseX() {
-        return (this.vs[1].asTHREEV3() - this.vs[0].asTHREEV3()).normalize();
+    get baseX() {
+        var v = this.vs[1].v.clone();
+        return v.sub(this.vs[0].v).normalize();
     }
 
-    baseY() {
-        return (this.vs[3].asTHREEV3() - this.vs[0].asTHREEV3()).normalize();
+    get baseY() {
+        var v = this.vs[3].v.clone();
+        return v.sub(this.vs[0].v).normalize();
     }
 
-    baseZ() {
-        return this.baseX().cross(this.baseY()).normalize();
+    get baseZ() {
+        return this.baseX.cross(this.baseY).normalize();
     }
 
     frameMatrix() {
-        const bX = this.baseX();
-        const bY = this.baseY();
-        const bZ = this.baseZ();
-        const o = this.center();
+        const bX = this.baseX;
+        const bY = this.baseY;
+        const bZ = this.baseZ;
+        const o = this.center;
 
-        return [
-            bX[0],bY[0],bZ[0],o[0],
-            bX[1],bY[1],bZ[1],o[1],
-            bX[2],bY[2],bZ[2],o[2],
+        var locMatrix = new THREE.Matrix4();
+        locMatrix.elements = Array.from([
+            bX.x,bY.x,bZ.x,o.x,
+            bX.y,bY.y,bZ.y,o.y,
+            bX.z,bY.z,bZ.z,o.z,
             0,0,0,1
-        ];
+        ]);
+
+        return locMatrix;
     }
 
     checkAdjacency() {
@@ -249,12 +265,18 @@ class CubeCell{
 
         return vertexArray;
     }
+
+    activeFacesMatrix(matrixArray) {
+        for (const f of this.#activeFaces) {
+            matrixArray.push(f.frameMatrix());
+        }
+    }
 }
 
 const floorGeometry = new CubeCell([
     null, null, null, null,
     null, null, null, null
-], 0, null);
+], 1, null);
 
 class VoxelGrid{
     constructor(x_cnt, y_cnt, z_cnt, spacing) {        
@@ -372,7 +394,7 @@ class VoxelGrid{
             fCount += v.calculateNeighbours();
         }
 
-        console.log("when calculating faces found "+fCount+" positives!");
+        return fCount;
     }
 
     remapVertices(){
@@ -400,17 +422,48 @@ class VoxelGrid{
         return objString;
     }
 
-    constructVertexeList() {
+    transformationMatrices() {
         this.calculateFaces();
+
+        let mArray = [];
+        for (const voxel of this.voxels) {
+            voxel.activeFacesMatrix(mArray);
+        }
+
+        return mArray;
+    }
+
+    constructVertexesList() {
+        console.log("when calculating faces found "+this.calculateFaces()+" positives!");
 
         let vArray = [];
         for (const voxel of this.voxels) {
             voxel.facesVertexlist(vArray);
         }
-
-        console.log(vArray);
         
         return vArray;
+    }
+
+    faceDotsGeometry(r = .5) {
+        let fCount = this.calculateFaces();
+
+        const geo = new THREE.DodecahedronGeometry(r, 2);
+        const redColor = new THREE.Color().setHex('0x30a5c1');
+        const material = new THREE.MeshPhongMaterial({
+            color: redColor,
+            opacity: 1.,
+            transparent: false,
+        });
+
+        var meshGeo = new THREE.InstancedMesh(geo, material, fCount);
+        const matrices = this.transformationMatrices();
+        for (var i = 0 ; i < fCount; i++) {
+            meshGeo.setMatrixAt(i, matrices[i]);
+        }
+
+        meshGeo.needsUpdate = true;
+
+        return meshGeo;
     }
 }
 
