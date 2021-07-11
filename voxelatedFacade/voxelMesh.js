@@ -127,11 +127,18 @@ class QuadFace{
         const o = this.center;
 
         var locMatrix = new THREE.Matrix4();
+        // locMatrix.elements = Array.from([
+        //     bX.x,bY.x,bZ.x,o.x,
+        //     bX.y,bY.y,bZ.y,o.y,
+        //     bX.z,bY.z,bZ.z,o.z,
+        //     0,0,0,1
+        // ]);
+
         locMatrix.elements = Array.from([
-            bX.x,bY.x,bZ.x,o.x,
-            bX.y,bY.y,bZ.y,o.y,
-            bX.z,bY.z,bZ.z,o.z,
-            0,0,0,1
+            bX.x,bX.y,bX.z,0,
+            bY.x,bY.y,bY.z,0,
+            bZ.x,bZ.y,bZ.z,0,
+            o.x,o.y,o.z,1
         ]);
 
         return locMatrix;
