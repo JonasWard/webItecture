@@ -84,6 +84,13 @@ class QuadFace{
         ];
     }
 
+    faceVerticesArray() {
+        return [
+            this.vs[0], this.vs[1], this.vs[2],
+            this.vs[0], this.vs[2], this.vs[3],
+        ];
+    }
+
     center() {
         return (this.vs[0].asTHREEV3() + this.vs[2].asTHREEV3()) * .5;
     }
@@ -125,9 +132,11 @@ class QuadFace{
             this.#isActive = false;
         }
 
-        for (const v of this.vs){
+        for (const v of this.vs) {
             v.isActive = this.#isActive;
         }
+
+        return this.#isActive;
     }
 }
 
@@ -143,12 +152,12 @@ class CubeCell{
 
     constructFaces(vs) {
         this.fs = [];
-        this.fs.push(QuadFace([vs[0], vs[1], vs[5], vs[4]], null, this));
-        this.fs.push(QuadFace([vs[1], vs[2], vs[6], vs[5]], null, this));
-        this.fs.push(QuadFace([vs[2], vs[3], vs[7], vs[6]], null, this));
-        this.fs.push(QuadFace([vs[3], vs[0], vs[4], vs[7]], null, this));
-        this.fs.push(QuadFace([vs[4], vs[5], vs[6], vs[7]], null, this));
-        this.fs.push(QuadFace([vs[2], vs[0], vs[3], vs[1]], null, this));
+        this.fs.push(new QuadFace([vs[0], vs[1], vs[5], vs[4]], null, this)); // front
+        this.fs.push(new QuadFace([vs[1], vs[2], vs[6], vs[5]], null, this)); // right
+        this.fs.push(new QuadFace([vs[2], vs[3], vs[7], vs[6]], null, this)); // back
+        this.fs.push(new QuadFace([vs[3], vs[0], vs[4], vs[7]], null, this)); // left
+        this.fs.push(new QuadFace([vs[4], vs[5], vs[6], vs[7]], null, this)); // top
+        this.fs.push(new QuadFace([vs[3], vs[2], vs[1], vs[0]], null, this)); // bottom
     }
 
     get front() {
@@ -164,7 +173,7 @@ class CubeCell{
     }
 
     set right(voxel) {
-        this.fs[0].neighbour = voxel.left;
+        this.fs[1].neighbour = voxel.left;
     }
 
     get back() {
@@ -200,9 +209,17 @@ class CubeCell{
     }
 
     calculateNeighbours() {
-        for (const f in this.fs){
-            f.checkAdjacency();
+        var fCount = 0;
+        this.#activeFaces = [];
+
+        for (const f of this.fs){
+            if (f.checkAdjacency()){
+                fCount += 1;
+                this.#activeFaces.push(f);
+            }
         }
+
+        return fCount;
     }
 
     facesAsObj() {
@@ -221,37 +238,23 @@ class CubeCell{
         return fString;
     }
 
-    facesVertexlist() {
-        var vertexArray = [];
-        for (const i of this.#activeFaces) {
-            var fIdxs = faceList[i];
-            for (const indexes of fIdxs){
-                for (const idx of indexes){
-                    vertexArray.push(this.vs[idx].x);
-                    vertexArray.push(this.vs[idx].y);
-                    vertexArray.push(this.vs[idx].z);
-                }
+    facesVertexlist(vertexArray) {
+        for (const f of this.#activeFaces) {
+            for (const v of f.faceVerticesArray()){
+                vertexArray.push(v.x);
+                vertexArray.push(v.y);
+                vertexArray.push(v.z);
             }
         }
 
         return vertexArray;
     }
-
-    // facePlanes() {
-    //     var frameMatrixes = [];
-
-    //     for (const i of this.#activeFaces) {
-    //         var fIdxs = faceList[i];
-    //         const a = this.vs
-    //     }
-    // }
-
-    // activePlane() {
-    //     var
-    // }
 }
 
-const floorGeometry = new CubeCell([], 0, null);
+const floorGeometry = new CubeCell([
+    null, null, null, null,
+    null, null, null, null
+], 0, null);
 
 class VoxelGrid{
     constructor(x_cnt, y_cnt, z_cnt, spacing) {        
@@ -313,7 +316,7 @@ class VoxelGrid{
                         this.vs[l1 + r1 + ln0]
                     ];
 
-                    this.voxels.push(new QubeCell(voxelVertices, 0, this));
+                    this.voxels.push(new CubeCell(voxelVertices, 1, this));
                 }
             }
         }
@@ -364,9 +367,12 @@ class VoxelGrid{
     }
 
     calculateFaces(){
+        var fCount = 0;
         for (const v of  this.voxels) {
-            v.calculateNeighbours();
+            fCount += v.calculateNeighbours();
         }
+
+        console.log("when calculating faces found "+fCount+" positives!");
     }
 
     remapVertices(){
@@ -396,19 +402,19 @@ class VoxelGrid{
 
     constructVertexeList() {
         this.calculateFaces();
-        this.remapVertices();
 
-        var vArray = [];
+        let vArray = [];
         for (const voxel of this.voxels) {
-            for (const value of voxel.facesVertexlist()) {
-                vArray.push(value);
-            }
+            voxel.facesVertexlist(vArray);
         }
+
+        console.log(vArray);
         
         return vArray;
     }
 }
 
+// console.log(floorGeometry);
 var vGrid = new VoxelGrid(10, 10, 10, 1.);
 // console.log(vGrid.constructVertexFaceListString());
 // console.log(vGrid.constructVertexeList());
