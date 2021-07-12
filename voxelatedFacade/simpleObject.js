@@ -1,15 +1,11 @@
 console.log(THREE);
 // html data
 const myCanvas = document.getElementById("myCanvas");
+let voxelGrid;
+let voxelGeo;
+let rayCastingGeo;
 
-// // loading gls
-// const loader = new THREE.GLTFLoader();
-// const dracoLoader = new THREE.DRACOLoader();
-// // dracoLoader.setDecoderPath( 'https://jonasward.ch/public_html/versionC.glb' );
-// // loader.setDRACOLoader( dracoLoader );
-
-// https://jonasward.ch/public_html/versionC.glb
-
+// setting up a simple scene
 // three.js data
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -20,7 +16,75 @@ scene.background = new THREE.Color("yellow");
 // enabling shadow maps
 renderer.shadowMap.enabled = true;
 
-var voxelGrid = new VoxelGrid(10, 10, 10, 1.);
+
+// input data definitions
+var changingState = new function() {
+  this.xCount = 10;
+  this.yCount = 10;
+  this.zCount = 10;
+  this.spacing = 1.;
+  this.switchOn = true;
+  this.switchOff = false;
+}
+
+// geometry generation functions
+function voxelGridConstructor() {
+  voxelGrid = new VoxelGrid(
+    changingState.xCount,
+    changingState.yCount,
+    changingState.zCount,
+    changingState.spacing
+  );
+}
+
+function voxelGeoUpdate() {
+  const vertexes = voxelGrid.constructVertexesList();
+
+  voxelGeo = new THREE.BufferGeometry();
+  const positionNumComponents = 3;
+  voxelGeo.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(vertexes), positionNumComponents));
+}
+
+function rayCastingGeoUpdate() {
+  rayCastingGeo = voxelGrid.faceDotsGeometry(.2);
+}
+
+function geoInit() {
+  voxelGridConstructor();
+  voxelGeoUpdate();
+  rayCastingGeoUpdate();
+  updateScene();
+}
+
+function updateScene() {
+  for (let i = scene.children.length - 1; i >= 0; i--) {
+    if(scene.children[i].type === "Mesh") {
+      scene.remove(scene.children[i]);
+      console.log("removed a mesh");
+    };
+  };
+
+  scene.add(new THREE.Mesh(voxelGeo, material));
+  scene.add(rayCastingGeo);
+}
+
+var gui = new dat.gui.GUI();
+gui.add(changingState, 'xCount', 1, 25 ).onChange( function () {
+  geoInit();
+});
+gui.add(changingState, 'yCount', 1, 25 ).onChange( function () {
+  geoInit();
+});
+gui.add(changingState, 'zCount', 1, 25 ).onChange( function () {
+  geoInit();
+});
+gui.add(changingState, 'spacing', .2, 5. ).onChange( function () {
+  geoInit();
+});
+
+voxelGrid = new VoxelGrid(10, 10, 10, 1.);
 var vertexes = voxelGrid.constructVertexesList();
 var meshGeo = voxelGrid.faceDotsGeometry(.2);
 

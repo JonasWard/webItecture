@@ -328,11 +328,11 @@ class VoxelGrid{
                     const r1 = (j + 1) * y_v_cnt;
                     const ln0 = k;
                     const ln1 = k + 1;
-                    const idxs = [
-                        l0 + r0 + ln0, l0 + r0 + ln1, l0 + r1 + ln1, l0 + r1 + ln0,
-                        l1 + r0 + ln0, l1 + r0 + ln1, l1 + r1 + ln1, l1 + r1 + ln0
-                    ];
-                    // console.log(idxs);
+                    // const idxs = [
+                    //     l0 + r0 + ln0, l0 + r0 + ln1, l0 + r1 + ln1, l0 + r1 + ln0,
+                    //     l1 + r0 + ln0, l1 + r0 + ln1, l1 + r1 + ln1, l1 + r1 + ln0
+                    // ];
+                    // // console.log(idxs);
 
                     var voxelVertices = [
                         this.vs[l0 + r0 + ln0],
@@ -475,6 +475,6 @@ class VoxelGrid{
 }
 
 // console.log(floorGeometry);
-var vGrid = new VoxelGrid(10, 10, 10, 1.);
+// var vGrid = new VoxelGrid(10, 10, 10, 1.);
 // console.log(vGrid.constructVertexFaceListString());
 // console.log(vGrid.constructVertexeList());
