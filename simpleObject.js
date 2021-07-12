@@ -20,7 +20,7 @@ scene.background = new THREE.Color("yellow");
 // enabling shadow maps
 renderer.shadowMap.enabled = true;
 
-var voxelGrid = new VoxelGrid(3, 2, 1, 1.);
+var voxelGrid = new VoxelGrid(10, 9, 8, 1.);
 var vertexes = voxelGrid.constructVertexeList();
 
 const geometry = new THREE.BufferGeometry();
