@@ -167,18 +167,19 @@ class Cell{
 const floorGeometry = new Cell([], 0, null);
 
 class VoxelGrid{
-    constructor(x_cnt, y_cnt, z_cnt, spacing) {        
+    constructor(x_cnt, y_cnt, z_cnt, spacing) {   
+        console.log(x_cnt, y_cnt, z_cnt);     
         this.constructFromGrid(x_cnt, y_cnt, z_cnt, spacing);
     }
 
     constructFromGrid(x_cnt, y_cnt, z_cnt, spacing) {
         // console.log(x_cnt, y_cnt, z_cnt);
 
-        var x_v_cnt = x_cnt + 1;
-        var y_v_cnt = y_cnt + 1;
-        var z_v_cnt = z_cnt + 1;
+        const x_v_cnt = x_cnt + 1;
+        const y_v_cnt = y_cnt + 1;
+        const z_v_cnt = z_cnt + 1;
         // constructing the vertices
-        var idx = 0;
+        let idx = 0;
         this.vs = [];
         for (var i = 0; i < z_v_cnt; i++) {
             for (var j = 0; j < y_v_cnt; j++) {
@@ -196,14 +197,14 @@ class VoxelGrid{
 
         // constructing the voxels
         this.voxels = [];
-        var layer_area = y_v_cnt * z_v_cnt;
-        for (var i = 0; i < z_cnt; i++) {
-            for (var j = 0; j < y_cnt; j++) {
-                for (var k = 0; k < x_cnt; k++) {
+        const layer_area = y_v_cnt * x_v_cnt;
+        for (let i = 0; i < z_cnt; i++) {
+            for (let j = 0; j < y_cnt; j++) {
+                for (let k = 0; k < x_cnt; k++) {
                     const l0 = i * layer_area;
                     const l1 = (i + 1) * layer_area;
-                    const r0 = j * y_v_cnt;
-                    const r1 = (j + 1) * y_v_cnt;
+                    const r0 = j * x_v_cnt;
+                    const r1 = (j + 1) * x_v_cnt;
                     const ln0 = k;
                     const ln1 = k + 1;
                     const idxs = [
@@ -212,7 +213,7 @@ class VoxelGrid{
                     ];
                     // console.log(idxs);
 
-                    var voxelVertices = [
+                    let voxelVertices = [
                         this.vs[l0 + r0 + ln0],
                         this.vs[l0 + r0 + ln1],
                         this.vs[l0 + r1 + ln1],
@@ -229,41 +230,41 @@ class VoxelGrid{
         }
 
         // populating the neighbourhoods
-        var x_l_area = y_cnt * z_cnt;
+        const x_l_area = y_cnt * x_cnt;
         // top and bottom
-        for (var i = 0; i < z_cnt-1; i++) {
-            for (var j = 0; j < y_cnt; j++) {
-                for (var k = 0; k < x_cnt; k++) {
-                    this.voxels[i * x_l_area + j * y_cnt + k].top = this.voxels[(i + 1) * x_l_area + j * y_cnt + k];
-                    this.voxels[(i + 1) * x_l_area + j * y_cnt + k].bottom = this.voxels[i * x_l_area + j * y_cnt + k];
+        for (let i = 0; i < z_cnt-1; i++) {
+            for (let j = 0; j < y_cnt; j++) {
+                for (let k = 0; k < x_cnt; k++) {
+                    this.voxels[i * x_l_area + j * x_cnt + k].top = this.voxels[(i + 1) * x_l_area + j * x_cnt + k];
+                    this.voxels[(i + 1) * x_l_area + j * x_cnt + k].bottom = this.voxels[i * x_l_area + j * x_cnt + k];
                 }
             }
         }
         
         // left and right
-        for (var i = 0; i < z_cnt; i++) {
-            for (var j = 0; j < y_cnt - 1; j++) {
-                for (var k = 0; k < x_cnt; k++) {
-                    this.voxels[i * x_l_area + j * y_cnt + k].back = this.voxels[i * x_l_area + (j + 1) * y_cnt + k];
-                    this.voxels[i * x_l_area + (j + 1) * y_cnt + k].front = this.voxels[i * x_l_area + j * y_cnt + k];
+        for (let i = 0; i < z_cnt; i++) {
+            for (let j = 0; j < y_cnt - 1; j++) {
+                for (let k = 0; k < x_cnt; k++) {
+                    this.voxels[i * x_l_area + j * x_cnt + k].back = this.voxels[i * x_l_area + (j + 1) * x_cnt + k];
+                    this.voxels[i * x_l_area + (j + 1) * x_cnt + k].front = this.voxels[i * x_l_area + j * x_cnt + k];
                 }
             }
         }
         
         // front and back
-        for (var i = 0; i < z_cnt; i++) {
-            for (var j = 0; j < y_cnt; j++) {
-                for (var k = 0; k < x_cnt - 1; k++) {
-                    this.voxels[i * x_l_area + j * y_cnt + k].right = this.voxels[i * x_l_area + j * y_cnt + k + 1];
-                    this.voxels[i * x_l_area + j * y_cnt + k + 1].left = this.voxels[i * x_l_area + j * y_cnt + k];
+        for (let i = 0; i < z_cnt; i++) {
+            for (let j = 0; j < y_cnt; j++) {
+                for (let k = 0; k < x_cnt - 1; k++) {
+                    this.voxels[i * x_l_area + j * x_cnt + k].right = this.voxels[i * x_l_area + j * x_cnt + k + 1];
+                    this.voxels[i * x_l_area + j * x_cnt + k + 1].left = this.voxels[i * x_l_area + j * x_cnt + k];
                 }
             }
         }
 
         // setting floor voxel
-        for (var j = 0; j < y_cnt; j++) {
-            for (var k = 0; k < x_cnt; k++) {
-                this.voxels[j * y_cnt + k].bottom = floorGeometry;
+        for (let j = 0; j < y_cnt; j++) {
+            for (let k = 0; k < x_cnt; k++) {
+                this.voxels[j * x_cnt + k].bottom = floorGeometry;
             }
         }
 
