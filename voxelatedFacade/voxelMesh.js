@@ -278,6 +278,10 @@ class CubeCell{
             matrixArray.push(f.frameMatrix());
         }
     }
+
+    get activeFaces() {
+        return this.#activeFaces;
+    }
 }
 
 const floorGeometry = new CubeCell([
@@ -393,11 +397,22 @@ class VoxelGrid{
 
     calculateFaces(){
         var fCount = 0;
-        for (const v of  this.voxels) {
+        for (const v of this.voxels) {
             fCount += v.calculateNeighbours();
         }
 
         return fCount;
+    }
+
+    get activeFaces() {
+        let faceArray = [];
+        for (const v of this.voxels) {
+            for (const f of v.activeFaces) {
+                faceArray.push(f);
+            }
+        }
+        
+        return faceArray;
     }
 
     remapVertices(){
